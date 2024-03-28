@@ -40,7 +40,7 @@ func GetConnection(username string, password string, dbName string) *sql.DB {
 
 func Export(code string, poolDB *sql.DB) {
 	ctx := context.Background()
-	sql_query := "SELECT * FROM temptesting WHERE Kode = ? ORDER BY Tanggal"
+	sql_query := "SELECT * FROM kepemilikan WHERE Kode = ? ORDER BY Tanggal"
 	statement, err := poolDB.PrepareContext(ctx, sql_query)
 	if err != nil {
 		panic(err)
@@ -92,26 +92,26 @@ func Export(code string, poolDB *sql.DB) {
 		}
 
 		formattedDate := stock.Tanggal.Format("02-01-2006")
-		file.WriteString(formattedDate + "|")
-		file.WriteString(stock.Kode + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalIS)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalCP)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalPF)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalIB)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalID)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalMF)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalSC)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalFD)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.LocalOT)) + "|")
+		file.WriteString(formattedDate + ",")
+		file.WriteString(stock.Kode + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalIS)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalCP)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalPF)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalIB)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalID)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalMF)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalSC)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalFD)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.LocalOT)) + ",")
 
-		file.WriteString(strconv.Itoa(int(stock.ForeignIS)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.ForeignCP)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.ForeignPF)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.ForeignIB)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.ForeignID)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.ForeignMF)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.ForeignSC)) + "|")
-		file.WriteString(strconv.Itoa(int(stock.ForeignFD)) + "|")
+		file.WriteString(strconv.Itoa(int(stock.ForeignIS)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.ForeignCP)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.ForeignPF)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.ForeignIB)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.ForeignID)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.ForeignMF)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.ForeignSC)) + ",")
+		file.WriteString(strconv.Itoa(int(stock.ForeignFD)) + ",")
 		file.WriteString(strconv.Itoa(int(stock.ForeignOT)) + "\n")
 		if !rows.Next() {
 			break
@@ -122,7 +122,7 @@ func Export(code string, poolDB *sql.DB) {
 
 func InsertData(poolDB *sql.DB, fileName string) {
 	ctx := context.Background()
-	sql_query := "INSERT INTO temptesting VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	sql_query := "INSERT INTO kepemilikan VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	statement, err := poolDB.PrepareContext(ctx, sql_query)
 	if err != nil {
 		panic(err)
@@ -148,6 +148,10 @@ func InsertData(poolDB *sql.DB, fileName string) {
 		}
 
 		hasilData := strings.Split(string(rowsData), "|")
+
+		// Data "Type" from KSEI are "EQUITY", "CORPORATE BOND", and etc
+		// If the data type is equal then "CORPORATE BOND" then the "EQUITY" type is already read
+		// "EQUITY" is the type of the stock
 		if hasilData[2] == "CORPORATE BOND" {
 			break
 		}
