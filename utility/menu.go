@@ -1,6 +1,7 @@
 package utility
 
 import (
+	"bufio"
 	"database/sql"
 	"fmt"
 	"os"
@@ -13,19 +14,26 @@ import (
 	"github.com/RichSvK/Stock_Holder_Composition_Go/database"
 )
 
+var Scanner = bufio.NewScanner(os.Stdin)
+
+func ScanInput() string {
+	Scanner.Scan()
+	return Scanner.Text()
+}
+
 func LoginMenu() *sql.DB {
 	var (
-		username string
-		password string
-		dbName   string
+		username string = ""
+		password string = ""
+		dbName   string = ""
 	)
 
 	fmt.Print("Insert username: ")
-	fmt.Scanln(&username)
+	username = ScanInput()
 	fmt.Print("Insert password: ")
-	fmt.Scanln(&password)
+	password = ScanInput()
 	fmt.Print("Insert Database name: ")
-	fmt.Scanln(&dbName)
+	dbName = ScanInput()
 	return database.GetConnection(username, password, dbName)
 }
 
@@ -40,12 +48,10 @@ func MainMenu() int {
 	fmt.Println("3. Exit")
 	for {
 		fmt.Print("Input[1 - 3]: ")
-		fmt.Scanln(&userInput)
+		userInput = ScanInput()
 		choice, err = strconv.Atoi(userInput)
-		if err == nil {
-			if choice >= 1 && choice <= 3 {
-				break
-			}
+		if err == nil && choice >= 1 && choice <= 3 {
+			break
 		}
 	}
 	return choice
@@ -53,9 +59,10 @@ func MainMenu() int {
 
 func ExportMenu(db *sql.DB) {
 	var code string = ""
+
 	for len(code) != 4 {
 		fmt.Print("Input stock name: ")
-		fmt.Scanln(&code)
+		code = ScanInput()
 	}
 	database.Export(code, db)
 }
@@ -64,15 +71,19 @@ func InsertMenu(db *sql.DB) {
 	ClearScreen()
 	fmt.Println("Menu Insert")
 
-	directory := "Data/"  // Change this to the directory you want to list files from
-	var fileList []string // Initialize an empty slice to hold file paths
+	// Change this to the directory you want to list files from
+	directory := "Data/"
+
+	// Initialize an empty slice to hold file paths
+	var fileList []string
 	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if !info.IsDir() {
-			fileList = append(fileList, path) // Add the file path to the slice
+			// Add the file path to the slice
+			fileList = append(fileList, path)
 		}
 		return nil
 	})
@@ -93,12 +104,10 @@ func InsertMenu(db *sql.DB) {
 	var userInput string = ""
 	for {
 		fmt.Printf("Input [1 - %d]: ", size)
-		fmt.Scanln(&userInput)
+		userInput = ScanInput()
 		choice, err = strconv.Atoi(userInput)
-		if err == nil {
-			if choice > 0 && choice < 4 {
-				break
-			}
+		if err == nil && choice >= 1 && choice <= size {
+			break
 		} else {
 			fmt.Println("Invalid Input")
 		}

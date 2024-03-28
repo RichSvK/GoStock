@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Stock struct {
-	Tanggal   time.Time
+	Date      time.Time
 	Kode      string
 	LocalIS   uint64
 	LocalCP   uint64

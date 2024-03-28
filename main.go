@@ -16,7 +16,8 @@ func main() {
 		fmt.Scanln(&enterBuffer)
 		utility.ClearScreen()
 	}
-	defer db.Close() // Close when the main function end
+	// Close database when the main function end
+	defer db.Close()
 
 	var choice int = 0
 	for choice != 3 {

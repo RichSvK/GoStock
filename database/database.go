@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/RichSvK/Stock_Holder_Composition_Go/models"
-
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -40,16 +39,18 @@ func GetConnection(username string, password string, dbName string) *sql.DB {
 
 func Export(code string, poolDB *sql.DB) {
 	ctx := context.Background()
-	sql_query := "SELECT * FROM kepemilikan WHERE Kode = ? ORDER BY Tanggal"
+	sql_query := "SELECT * FROM Stocks WHERE `Code` = ? ORDER BY `Date`"
 	statement, err := poolDB.PrepareContext(ctx, sql_query)
 	if err != nil {
-		panic(err)
+		fmt.Println("Fail to export because", err.Error())
+		return
 	}
 	defer statement.Close()
 
 	rows, err := statement.QueryContext(ctx, code)
 	if err != nil {
-		panic(err)
+		fmt.Println("Fail to export because", err.Error())
+		return
 	}
 	defer rows.Close()
 
@@ -75,23 +76,25 @@ func Export(code string, poolDB *sql.DB) {
 
 	file, err := os.OpenFile("Output/"+code+".csv", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
+		fmt.Println("Fail to open file because", err.Error())
 		return
 	}
 	defer file.Close()
 
 	stock := models.Stock{}
-	file.WriteString("Date|Stock|Local IS|Local CP|Local PF|Local IB|Local ID|Local MF|Local SC|Local FD|Local OT|Foreign IS|Foreign CP|Foreign PF|Foreign IB|Foreign ID|Foreign MF|Foreign SC|Foreign FD|Foreign OT\n")
+	file.WriteString("Date,Code,Local IS,Local CP,Local PF,Local IB,Local ID,Local MF,Local SC,Local FD,Local OT,Foreign IS,Foreign CP,Foreign PF,Foreign IB,Foreign ID,Foreign MF,Foreign SC,Foreign FD,Foreign OT\n")
 	for {
-		err = rows.Scan(&stock.Tanggal, &stock.Kode, &stock.LocalIS, &stock.LocalCP, &stock.LocalPF,
+		err = rows.Scan(&stock.Date, &stock.Kode, &stock.LocalIS, &stock.LocalCP, &stock.LocalPF,
 			&stock.LocalIB, &stock.LocalID, &stock.LocalMF, &stock.LocalSC, &stock.LocalFD, &stock.LocalOT,
 			&stock.ForeignIS, &stock.ForeignCP, &stock.ForeignPF, &stock.ForeignIB, &stock.ForeignID,
 			&stock.ForeignMF, &stock.ForeignSC, &stock.ForeignFD, &stock.ForeignOT)
 
 		if err != nil {
-			panic(err)
+			fmt.Println(err.Error())
+			return
 		}
 
-		formattedDate := stock.Tanggal.Format("02-01-2006")
+		formattedDate := stock.Date.Format("02-01-2006")
 		file.WriteString(formattedDate + ",")
 		file.WriteString(stock.Kode + ",")
 		file.WriteString(strconv.Itoa(int(stock.LocalIS)) + ",")
@@ -113,6 +116,8 @@ func Export(code string, poolDB *sql.DB) {
 		file.WriteString(strconv.Itoa(int(stock.ForeignSC)) + ",")
 		file.WriteString(strconv.Itoa(int(stock.ForeignFD)) + ",")
 		file.WriteString(strconv.Itoa(int(stock.ForeignOT)) + "\n")
+
+		// If there is not next data then break out of loop
 		if !rows.Next() {
 			break
 		}
@@ -122,15 +127,17 @@ func Export(code string, poolDB *sql.DB) {
 
 func InsertData(poolDB *sql.DB, fileName string) {
 	ctx := context.Background()
-	sql_query := "INSERT INTO kepemilikan VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	sql_query := "INSERT INTO Stocks VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	statement, err := poolDB.PrepareContext(ctx, sql_query)
 	if err != nil {
-		panic(err)
+		fmt.Println(err.Error())
+		return
 	}
 	defer statement.Close()
 
 	file, err := os.OpenFile(fileName, os.O_RDONLY, 0444)
 	if err != nil {
+		fmt.Println(err.Error())
 		return
 	}
 	defer file.Close()
@@ -139,7 +146,13 @@ func InsertData(poolDB *sql.DB, fileName string) {
 	var stock = models.Stock{}
 	dateFormatter := "02-Jan-2006"
 
-	_, _, _ = reader.ReadLine() // Remove header
+	// Remove header
+	_, _, err = reader.ReadLine()
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
 	var rowsData []byte = nil
 	for {
 		rowsData, _, err = reader.ReadLine()
@@ -147,52 +160,62 @@ func InsertData(poolDB *sql.DB, fileName string) {
 			break
 		}
 
-		hasilData := strings.Split(string(rowsData), "|")
+		stockData := strings.Split(string(rowsData), "|")
 
 		// Data "Type" from KSEI are "EQUITY", "CORPORATE BOND", and etc
 		// If the data type is equal then "CORPORATE BOND" then the "EQUITY" type is already read
 		// "EQUITY" is the type of the stock
-		if hasilData[2] == "CORPORATE BOND" {
+		if stockData[2] == "CORPORATE BOND" {
 			break
 		}
 
+		// Skip Preferred stock and other who has more than 4 character
+		if len(stockData[1]) != 4 {
+			continue
+		}
+
 		// Change the string to date
-		stock.Tanggal, err = time.Parse(dateFormatter, string(hasilData[0]))
+		stock.Date, err = time.Parse(dateFormatter, string(stockData[0]))
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error(), "1")
+			return
 		}
 
 		// Format the date
-		stock.Tanggal, err = time.Parse("02-01-2006", stock.Tanggal.Format("02-01-2006"))
+		stock.Date, err = time.Parse("02-01-2006", stock.Date.Format("02-01-2006"))
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error(), "2")
+			return
 		}
 
-		stock.Kode = string(hasilData[1])
-		stock.LocalIS, _ = strconv.ParseUint(string(hasilData[5]), 10, 64)
-		stock.LocalCP, _ = strconv.ParseUint(string(hasilData[6]), 10, 64)
-		stock.LocalPF, _ = strconv.ParseUint(string(hasilData[7]), 10, 64)
-		stock.LocalIB, _ = strconv.ParseUint(string(hasilData[8]), 10, 64)
-		stock.LocalID, _ = strconv.ParseUint(string(hasilData[9]), 10, 64)
-		stock.LocalMF, _ = strconv.ParseUint(string(hasilData[10]), 10, 64)
-		stock.LocalSC, _ = strconv.ParseUint(string(hasilData[11]), 10, 64)
-		stock.LocalFD, _ = strconv.ParseUint(string(hasilData[12]), 10, 64)
-		stock.LocalOT, _ = strconv.ParseUint(string(hasilData[13]), 10, 64)
+		stock.Kode = string(stockData[1])
+		stock.LocalIS, _ = strconv.ParseUint(string(stockData[5]), 10, 64)
+		stock.LocalCP, _ = strconv.ParseUint(string(stockData[6]), 10, 64)
+		stock.LocalPF, _ = strconv.ParseUint(string(stockData[7]), 10, 64)
+		stock.LocalIB, _ = strconv.ParseUint(string(stockData[8]), 10, 64)
+		stock.LocalID, _ = strconv.ParseUint(string(stockData[9]), 10, 64)
+		stock.LocalMF, _ = strconv.ParseUint(string(stockData[10]), 10, 64)
+		stock.LocalSC, _ = strconv.ParseUint(string(stockData[11]), 10, 64)
+		stock.LocalFD, _ = strconv.ParseUint(string(stockData[12]), 10, 64)
+		stock.LocalOT, _ = strconv.ParseUint(string(stockData[13]), 10, 64)
 
-		stock.ForeignIS, _ = strconv.ParseUint(string(hasilData[15]), 10, 64)
-		stock.ForeignCP, _ = strconv.ParseUint(string(hasilData[16]), 10, 64)
-		stock.ForeignPF, _ = strconv.ParseUint(string(hasilData[17]), 10, 64)
-		stock.ForeignIB, _ = strconv.ParseUint(string(hasilData[18]), 10, 64)
-		stock.ForeignID, _ = strconv.ParseUint(string(hasilData[19]), 10, 64)
-		stock.ForeignMF, _ = strconv.ParseUint(string(hasilData[20]), 10, 64)
-		stock.ForeignSC, _ = strconv.ParseUint(string(hasilData[21]), 10, 64)
-		stock.ForeignFD, _ = strconv.ParseUint(string(hasilData[22]), 10, 64)
-		stock.ForeignOT, _ = strconv.ParseUint(string(hasilData[23]), 10, 64)
+		stock.ForeignIS, _ = strconv.ParseUint(string(stockData[15]), 10, 64)
+		stock.ForeignCP, _ = strconv.ParseUint(string(stockData[16]), 10, 64)
+		stock.ForeignPF, _ = strconv.ParseUint(string(stockData[17]), 10, 64)
+		stock.ForeignIB, _ = strconv.ParseUint(string(stockData[18]), 10, 64)
+		stock.ForeignID, _ = strconv.ParseUint(string(stockData[19]), 10, 64)
+		stock.ForeignMF, _ = strconv.ParseUint(string(stockData[20]), 10, 64)
+		stock.ForeignSC, _ = strconv.ParseUint(string(stockData[21]), 10, 64)
+		stock.ForeignFD, _ = strconv.ParseUint(string(stockData[22]), 10, 64)
+		stock.ForeignOT, _ = strconv.ParseUint(string(stockData[23]), 10, 64)
 
-		_, err = statement.ExecContext(ctx, stock.Tanggal, stock.Kode, stock.LocalIS, stock.LocalCP, stock.LocalPF, stock.LocalIB, stock.LocalID, stock.LocalMF, stock.LocalSC, stock.LocalFD, stock.LocalOT,
+		fmt.Println(stock.Kode)
+		_, err = statement.ExecContext(ctx, stock.Date, stock.Kode, stock.LocalIS, stock.LocalCP, stock.LocalPF, stock.LocalIB, stock.LocalID, stock.LocalMF, stock.LocalSC, stock.LocalFD, stock.LocalOT,
 			stock.ForeignIS, stock.ForeignCP, stock.ForeignPF, stock.ForeignIB, stock.ForeignID, stock.ForeignMF, stock.ForeignSC, stock.ForeignFD, stock.ForeignOT)
+
 		if err != nil {
-			continue
+			fmt.Println(err.Error(), "3")
+			return
 		}
 	}
 	fmt.Println("Success Insert Data")
