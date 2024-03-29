@@ -209,7 +209,6 @@ func InsertData(poolDB *sql.DB, fileName string) {
 		stock.ForeignFD, _ = strconv.ParseUint(string(stockData[22]), 10, 64)
 		stock.ForeignOT, _ = strconv.ParseUint(string(stockData[23]), 10, 64)
 
-		fmt.Println(stock.Kode)
 		_, err = statement.ExecContext(ctx, stock.Date, stock.Kode, stock.LocalIS, stock.LocalCP, stock.LocalPF, stock.LocalIB, stock.LocalID, stock.LocalMF, stock.LocalSC, stock.LocalFD, stock.LocalOT,
 			stock.ForeignIS, stock.ForeignCP, stock.ForeignPF, stock.ForeignIB, stock.ForeignID, stock.ForeignMF, stock.ForeignSC, stock.ForeignFD, stock.ForeignOT)
 

@@ -28,6 +28,7 @@ func LoginMenu() *sql.DB {
 		dbName   string = ""
 	)
 
+	fmt.Println("Login Menu")
 	fmt.Print("Insert username: ")
 	username = ScanInput()
 	fmt.Print("Insert password: ")
