@@ -1,5 +1,3 @@
--- Active: 1711128350343@@127.0.0.1@3306@balance
-
 -- See User and Host --
 SELECT User, Host FROM mysql.user;
 
@@ -22,38 +20,38 @@ USE Balance;
 -- SC = Securities  --
 -- FD = Foundation --
 -- OT = Other --
-CREATE TABLE Stocks(
+CREATE TABLE Stock(
 	`Date` DATE,
-    `Code` CHAR(4),
-	`Local IS` BIGINT UNSIGNED,
-	`Local CP` BIGINT UNSIGNED,
-	`Local PF` BIGINT UNSIGNED,
-	`Local IB` BIGINT UNSIGNED,
-	`Local ID` BIGINT UNSIGNED,
-	`Local MF` BIGINT UNSIGNED,
-    `Local SC` BIGINT UNSIGNED,
-	`Local FD` BIGINT UNSIGNED,
-    `Local OT` BIGINT UNSIGNED,
-    `Foreign IS` BIGINT UNSIGNED,
-	`Foreign CP` BIGINT UNSIGNED,
-	`Foreign PF` BIGINT UNSIGNED,
-	`Foreign IB` BIGINT UNSIGNED,
-	`Foreign ID` BIGINT UNSIGNED,
-	`Foreign MF` BIGINT UNSIGNED,
-	`Foreign SC` BIGINT UNSIGNED,
-	`Foreign FD` BIGINT UNSIGNED,
-	`Foreign OT` BIGINT UNSIGNED,
-    PRIMARY KEY (`Date`, `Code`)
+	`Code` CHAR(4),
+	`Local_IS` BIGINT UNSIGNED,
+	`Local_CP` BIGINT UNSIGNED,
+	`Local_PF` BIGINT UNSIGNED,
+	`Local_IB` BIGINT UNSIGNED,
+	`Local_ID` BIGINT UNSIGNED,
+	`Local_MF` BIGINT UNSIGNED,
+	`Local_SC` BIGINT UNSIGNED,
+	`Local_FD` BIGINT UNSIGNED,
+	`Local_OT` BIGINT UNSIGNED,
+	`Foreign_IS` BIGINT UNSIGNED,
+	`Foreign_CP` BIGINT UNSIGNED,
+	`Foreign_PF` BIGINT UNSIGNED,
+	`Foreign_IB` BIGINT UNSIGNED,
+	`Foreign_ID` BIGINT UNSIGNED,
+	`Foreign_MF` BIGINT UNSIGNED,
+	`Foreign_SC` BIGINT UNSIGNED,
+	`Foreign_FD` BIGINT UNSIGNED,
+	`Foreign_OT` BIGINT UNSIGNED,
+	PRIMARY KEY (`Date`, `Code`)
 );
 
 -- Testing query --
-SELECT * FROM Stocks WHERE `Code` = 'BBCA' ORDER BY `Date`;
+SELECT * FROM Stock WHERE `Code` = 'BBCA' ORDER BY `Date`;
 
 -- Check the Stocks Table --
-DESC Stocks;
+DESC Stock;
 
 -- Show tables in Database --
 SHOW TABLES;
 
 -- Clear table data --
-TRUNCATE Table Stocks;
+TRUNCATE Table Stock;

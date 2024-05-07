@@ -1,38 +1,35 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
-	"github.com/RichSvK/Stock_Holder_Composition_Go/utility"
+	"github.com/RichSvK/Stock_Holder_Composition_Go/config"
+	"github.com/RichSvK/Stock_Holder_Composition_Go/helper"
+	"github.com/RichSvK/Stock_Holder_Composition_Go/utilities"
 )
 
+func init() {
+	config.MakeFolder("output")
+	utilities.LoginMenu()
+}
+
 func main() {
-	var db *sql.DB = nil
-	var enterBuffer string = ""
-	for db == nil {
-		db = utility.LoginMenu()
-		fmt.Print("Press [Enter] to continue...")
-		fmt.Scanln(&enterBuffer)
-		utility.ClearScreen()
-	}
 	// Close database when the main function end
-	defer db.Close()
+	defer config.PoolDB.Close()
 
 	var choice int = 0
 	for choice != 3 {
-		choice = utility.MainMenu()
+		choice = utilities.MainMenu()
 		switch choice {
 		case 1:
-			utility.InsertMenu(db)
+			utilities.InsertMenu()
 		case 2:
-			utility.ExportMenu(db)
+			utilities.ExportMenu()
 		default:
 			fmt.Println("Program finished")
 			return
 		}
-		fmt.Print("Press [Enter] to continue...")
-		fmt.Scanln(&enterBuffer)
-		utility.ClearScreen()
+		helper.PressEnter()
+		helper.ClearScreen()
 	}
 }
