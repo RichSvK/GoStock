@@ -44,15 +44,16 @@ This program allows users to export a CSV file containing the holder composition
 
     - If the input is 1, the user enters the insert menu and displays all files in the "data" folder:
       * If the user inputs an invalid or out of range value, the program will prompt user to input again.
+      * If the input is valid and the data is yet to be inserted in the database, the program will insert the data from the txt file original format from KSEI to the database.
+        <br>
+        ![image](https://github.com/RichSvK/Stock_Holder_Composition_Go/assets/87809864/6c92d1b3-b598-411d-87d7-efa88b6e97f1)
+        <br>
       * If the input is valid but the data is already inserted in the database, the program will display an exception of duplicate entry and return to the main menu.
       For example, I already insert "Desember.txt" to my database. If I want to insert it "Desember.txt" again to my database, it will be rejected because of duplicate entry of primary key
         <br>
-        ![image](https://github.com/RichSvK/Stock_Holder_Composition_Go/assets/87809864/b03d5a67-178e-46be-8cc7-b9b45ad33337)
+        ![image](https://github.com/RichSvK/Stock_Holder_Composition_Go/assets/87809864/53018015-bda7-4622-9206-35aa241a906b)
         <br>
-      * If the input is valid and the data is yet to be inserted in the database, the program will insert the data from the txt file original format from KSEI to the database.
-        <br>
-        ![image](https://github.com/RichSvK/Stock_Holder_Composition_Go/assets/87809864/6cc6dc18-4c04-4707-a8cf-18fb192826dc)
-        <br>
+
       * Program will go back to main menu
    
     - If the input is "2", the user enters the export menu:
