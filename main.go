@@ -8,16 +8,19 @@ import (
 	"github.com/RichSvK/Stock_Holder_Composition_Go/utilities"
 )
 
-func init() {
-	config.MakeFolder("output")
-	utilities.LoginMenu()
-}
-
 func main() {
-	// Close database when the main function end
-	defer config.PoolDB.Close()
+	config.MakeFolder("output")
 
-	var choice int = 0
+	db := utilities.LoginMenu()
+
+	// Close database when the main function end
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println("Failed to close database connection:", err)
+		}
+	}()
+
+	choice := 0
 	for choice != 3 {
 		choice = utilities.MainMenu()
 		switch choice {

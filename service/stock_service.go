@@ -2,6 +2,7 @@ package service
 
 import (
 	"bufio"
+	"encoding/csv"
 	"fmt"
 	"io"
 	"os"
@@ -30,33 +31,56 @@ func Export(code string) {
 		fmt.Println("Fail to open file because", err.Error())
 		return
 	}
-	defer file.Close()
 
-	file.WriteString("Date,Code,Local IS,Local CP,Local PF,Local IB,Local ID,Local MF,Local SC,Local FD,Local OT,Foreign IS,Foreign CP,Foreign PF,Foreign IB,Foreign ID,Foreign MF,Foreign SC,Foreign FD,Foreign OT\n")
-	for _, stock := range listStock {
-		formattedDate := stock.Date.Format("02-01-2006")
-		file.WriteString(formattedDate + ",")
-		file.WriteString(stock.Kode + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalIS)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalCP)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalPF)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalIB)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalID)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalMF)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalSC)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalFD)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.LocalOT)) + ",")
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Println("Failed to close file")
+		}
+	}()
 
-		file.WriteString(strconv.Itoa(int(stock.ForeignIS)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.ForeignCP)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.ForeignPF)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.ForeignIB)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.ForeignID)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.ForeignMF)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.ForeignSC)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.ForeignFD)) + ",")
-		file.WriteString(strconv.Itoa(int(stock.ForeignOT)) + "\n")
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	header := []string{"Date", "Code", "Local IS", "Local CP", "Local PF", "Local IB", "Local ID", "Local MF", "Local SC", "Local FD", "Local OT", "Foreign IS", "Foreign CP", "Foreign PF", "Foreign IB", "Foreign ID", "Foreign MF", "Foreign SC", "Foreign FD", "Foreign OT"}
+	// Write header
+	if err := writer.Write(header); err != nil {
+		return
 	}
+
+	for _, stock := range listStock {
+		record := []string{
+			stock.Date.Format("02-01-2006"),
+			stock.Code,
+			strconv.FormatUint(stock.LocalIS, 10),
+			strconv.FormatUint(stock.LocalCP, 10),
+			strconv.FormatUint(stock.LocalPF, 10),
+			strconv.FormatUint(stock.LocalIB, 10),
+			strconv.FormatUint(stock.LocalID, 10),
+			strconv.FormatUint(stock.LocalMF, 10),
+			strconv.FormatUint(stock.LocalSC, 10),
+			strconv.FormatUint(stock.LocalFD, 10),
+			strconv.FormatUint(stock.LocalOT, 10),
+
+			strconv.FormatUint(stock.ForeignIS, 10),
+			strconv.FormatUint(stock.ForeignCP, 10),
+			strconv.FormatUint(stock.ForeignPF, 10),
+			strconv.FormatUint(stock.ForeignIB, 10),
+			strconv.FormatUint(stock.ForeignID, 10),
+			strconv.FormatUint(stock.ForeignMF, 10),
+			strconv.FormatUint(stock.ForeignSC, 10),
+			strconv.FormatUint(stock.ForeignFD, 10),
+			strconv.FormatUint(stock.ForeignOT, 10),
+		}
+
+		if err := writer.Write(record); err != nil {
+			return
+		}
+	}
+
+	if err := writer.Error(); err != nil {
+		return
+	}
+
 	fmt.Printf("File %s.csv exported\n", code)
 }
 
@@ -66,7 +90,12 @@ func InsertData(fileName string) {
 		fmt.Println(err.Error())
 		return
 	}
-	defer file.Close()
+
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Println("Failed to close file")
+		}
+	}()
 
 	reader := bufio.NewReader(file)
 
@@ -77,9 +106,10 @@ func InsertData(fileName string) {
 		return
 	}
 
-	var rowsData []byte = nil
+	var rowsData []byte
 	var stock = model.Stock{}
 	dateFormatter := "02-Jan-2006"
+
 	for {
 		rowsData, _, err = reader.ReadLine()
 		if err == io.EOF {
@@ -113,26 +143,41 @@ func InsertData(fileName string) {
 			return
 		}
 
-		stock.Kode = string(stockData[1])
-		stock.LocalIS, _ = strconv.ParseUint(string(stockData[5]), 10, 64)
-		stock.LocalCP, _ = strconv.ParseUint(string(stockData[6]), 10, 64)
-		stock.LocalPF, _ = strconv.ParseUint(string(stockData[7]), 10, 64)
-		stock.LocalIB, _ = strconv.ParseUint(string(stockData[8]), 10, 64)
-		stock.LocalID, _ = strconv.ParseUint(string(stockData[9]), 10, 64)
-		stock.LocalMF, _ = strconv.ParseUint(string(stockData[10]), 10, 64)
-		stock.LocalSC, _ = strconv.ParseUint(string(stockData[11]), 10, 64)
-		stock.LocalFD, _ = strconv.ParseUint(string(stockData[12]), 10, 64)
-		stock.LocalOT, _ = strconv.ParseUint(string(stockData[13]), 10, 64)
+		stock.Code = stockData[1]
+		fields := []struct {
+			ptr   *uint64
+			index int
+			name  string
+		}{
+			{&stock.LocalIS, 5, "Local IS"},
+			{&stock.LocalCP, 6, "Local CP"},
+			{&stock.LocalPF, 7, "Local PF"},
+			{&stock.LocalIB, 8, "Local IB"},
+			{&stock.LocalID, 9, "Local ID"},
+			{&stock.LocalMF, 10, "Local MF"},
+			{&stock.LocalSC, 11, "Local SC"},
+			{&stock.LocalFD, 12, "Local FD"},
+			{&stock.LocalOT, 13, "Local OT"},
+			{&stock.ForeignIS, 15, "Foreign IS"},
+			{&stock.ForeignCP, 16, "Foreign CP"},
+			{&stock.ForeignPF, 17, "Foreign PF"},
+			{&stock.ForeignIB, 18, "Foreign IB"},
+			{&stock.ForeignID, 19, "Foreign ID"},
+			{&stock.ForeignMF, 20, "Foreign MF"},
+			{&stock.ForeignSC, 21, "Foreign SC"},
+			{&stock.ForeignFD, 22, "Foreign FD"},
+			{&stock.ForeignOT, 23, "Foreign OT"},
+			{&stock.ListedShare, 24, "Listed Share"},
+		}
 
-		stock.ForeignIS, _ = strconv.ParseUint(string(stockData[15]), 10, 64)
-		stock.ForeignCP, _ = strconv.ParseUint(string(stockData[16]), 10, 64)
-		stock.ForeignPF, _ = strconv.ParseUint(string(stockData[17]), 10, 64)
-		stock.ForeignIB, _ = strconv.ParseUint(string(stockData[18]), 10, 64)
-		stock.ForeignID, _ = strconv.ParseUint(string(stockData[19]), 10, 64)
-		stock.ForeignMF, _ = strconv.ParseUint(string(stockData[20]), 10, 64)
-		stock.ForeignSC, _ = strconv.ParseUint(string(stockData[21]), 10, 64)
-		stock.ForeignFD, _ = strconv.ParseUint(string(stockData[22]), 10, 64)
-		stock.ForeignOT, _ = strconv.ParseUint(string(stockData[23]), 10, 64)
+		for _, f := range fields {
+			val, err := strconv.ParseUint(string(stockData[f.index]), 10, 64)
+			if err != nil {
+				fmt.Printf("Failed to parse %s", f.name)
+				return
+			}
+			*f.ptr = val
+		}
 
 		if err := repository.InsertData(stock); err != nil {
 			fmt.Println(err.Error())

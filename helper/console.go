@@ -18,7 +18,9 @@ func ScanInput(promptString string) string {
 
 func PressEnter() {
 	fmt.Print("Press [Enter] to continue...")
-	fmt.Scanln()
+	if _, err := fmt.Scanln(); err != nil {
+		fmt.Println("Error reading input:", err)
+	}
 }
 
 func ClearScreen() {
@@ -29,5 +31,8 @@ func ClearScreen() {
 		cmd = exec.Command("cmd", "/c", "cls")
 	}
 	cmd.Stdout = os.Stdout
-	cmd.Run()
+
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Error clearing screen:", err)
+	}
 }

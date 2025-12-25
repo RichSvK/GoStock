@@ -13,12 +13,10 @@ import (
 	"github.com/RichSvK/Stock_Holder_Composition_Go/service"
 )
 
-func LoginMenu() {
-	var (
-		username string = ""
-		password string = ""
-		dbName   string = ""
-	)
+func LoginMenu() *sql.DB {
+	username := ""
+	password := ""
+	dbName := ""
 
 	var db *sql.DB = nil
 	for db == nil {
@@ -30,12 +28,14 @@ func LoginMenu() {
 		helper.PressEnter()
 		helper.ClearScreen()
 	}
+
+	return db
 }
 
 func MainMenu() int {
-	var userInput string = ""
-	var choice int = 0
-	var err error = nil
+	userInput := ""
+	choice := 0
+	err := error(nil)
 	helper.ClearScreen()
 	fmt.Println("Main Menu")
 	fmt.Println("1. Insert Data to Database")
@@ -52,7 +52,7 @@ func MainMenu() int {
 }
 
 func ExportMenu() {
-	var code string = ""
+	code := ""
 
 	for len(code) != 4 {
 		code = helper.ScanInput("Input stock name [4 Letter]: ")
@@ -86,15 +86,16 @@ func InsertMenu() {
 		return
 	}
 
-	var size int = len(fileList)
-	var tempName []string = nil
+	size := len(fileList)
 	for i := 0; i < size; i++ {
-		tempName = strings.Split(fileList[i], "data\\")
-		fmt.Printf("%d. %s from %s\n", (i + 1), tempName[1], fileList[i])
+		parts := strings.Split(fileList[i], "data"+string(filepath.Separator))
+		if len(parts) > 1 {
+			fmt.Printf("%d. %s from %s\n", i+1, parts[1], fileList[i])
+		}
 	}
 
-	var choice int = 0
-	var userInput string = ""
+	choice := 0
+	userInput := ""
 	promptString := fmt.Sprintf("Input [1 - %d]: ", size)
 	for {
 		userInput = helper.ScanInput(promptString)

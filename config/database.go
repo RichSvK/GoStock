@@ -11,7 +11,7 @@ import (
 var PoolDB *sql.DB = nil
 
 func GetConnection(username string, password string, dbName string) *sql.DB {
-	var err error = nil
+	err := error(nil)
 	PoolDB, err = sql.Open("mysql", username+":"+password+"@tcp(localhost:3306)/"+dbName+"?parseTime=true")
 	if err != nil {
 		return nil
